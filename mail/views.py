@@ -78,6 +78,7 @@ def mailbox(request, mailbox):
 
     # Filter emails returned based on mailbox
     if mailbox == "inbox":
+        print(vars(request.user))
         emails = Email.objects.filter(
             user=request.user, recipients=request.user, archived=False
         )

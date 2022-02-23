@@ -1,3 +1,23 @@
 textarea {
     min-height: 400px;
 }
+h4{
+    background-color: #ccc;
+}
+#inbox-div{
+    border:solid 1px
+}
+.mail-sn::before{
+    content:'Sender';
+    padding: 10px;
+    font-weight: bold;
+}
+.mail-body::before{
+    content: 'Body ';
+    padding: 10px;
+    font-weight: bold;
+}
+
+.mail-body{
+    border: solid   ;
+}

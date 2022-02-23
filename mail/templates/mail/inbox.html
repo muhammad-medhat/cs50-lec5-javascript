@@ -11,14 +11,16 @@
     <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
     <hr>
 
-    <b>emails view</b>
     <div id="emails-view">
+        <h4>Emails View</h4>
+        <div id="inbox-div"></div>
     </div>
-    <b>compose view</b>
 
     <div id="compose-view">
         <h3>New Email</h3>
         <form id="compose-form">
+            <h4>Compose View</h4>
+
             <div class="form-group">
                 From: <input disabled class="form-control" value="{{ request.user.email }}">
             </div>

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
+  
   document.querySelector('#compose-form').onsubmit = () =>{
     console.log("Sending an Email...")
     sendEmail()
@@ -36,6 +37,14 @@ function load_mailbox(mailbox) {
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>Show the mailbox name: ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  console.log(`'milbox is: ${mailbox}`)
+  switch(mailbox){
+    case 'inbox': 
+      getInbox()
+      break;
+    default: 
+
+  }
 }
 
 const sendEmail = () => {
@@ -57,3 +66,60 @@ const bdy = document.getElementById('compose-body').value
   });
   
 }
+
+const getInbox = () => {
+  console.log('show inbox...')
+  fetch('/emails/inbox')
+  .then(response => response.json())
+  .then(emails => {
+      // Print emails
+      console.log(emails);
+
+      // ... do something else with emails ...
+      const inboxDev = document.createElement('div')
+      inboxDev.id = "inbox-div"
+      
+      const resUl = document.createElement('ul')
+      const emailsLi = emails.forEach(e => {
+        const li = document.createElement('li')
+        const sn = document.createElement('div')
+        const dv = document.createElement('div')
+        li.className = 'mail-li'
+        sn.className = 'mail-sn'
+        dv.className = 'mail-body'
+        li.dataset.eid = e.id
+        li.innerHTML = e.subject
+        sn.innerHTML = e.sender
+        dv.innerHTML = e.body
+        li.append(sn)
+        li.append(dv)
+        resUl.append(li)
+      });
+      // resUl.append(emailsLi)
+      inboxDev.append(resUl)
+      document.getElementById("emails-view").append(inboxDev)
+      document.querySelectorAll('.mail-li').forEach(li=>{
+        li.addEventListener('click', ()=>{
+          getEmail(li.dataset.eid)
+          // console.log(li)
+        })
+      })
+  });
+}
+const getEmail = (id) => {
+
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+      // Print email
+      console.log(email);
+
+      // ... do something else with email ...
+  });
+
+}
+// const fillInbox = (arr, div) =>{
+
+//   const cont = arr.map
+
+// }

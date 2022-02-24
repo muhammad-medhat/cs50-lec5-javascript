@@ -6,9 +6,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
   
+  /**
+   * Compose mail
+   */
   document.querySelector('#compose-form').onsubmit = () =>{
     console.log("Sending an Email...")
     sendEmail()
+    // Load the inbox
+    load_mailbox('inbox')
     // Stop the Default Behaviour
     return false
   };
@@ -36,14 +41,16 @@ function load_mailbox(mailbox) {
   document.querySelector('#compose-view').style.display = 'none';
 
   // Show the mailbox name
-  document.querySelector('#emails-view').innerHTML = `<h3>Show the mailbox name: ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-  console.log(`'milbox is: ${mailbox}`)
+  document.querySelector('#emails-view').innerHTML = `<h3> ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  console.log(`mailbox is: ${mailbox}`)
   switch(mailbox){
-    case 'inbox': 
-      getInbox()
+    case 'archive': 
+      console.log('get archived mail')
       break;
-    default: 
-
+    case 'sent':
+        console.log('loading sent tab')
+      break;
+    default: getInbox()
   }
 }
 
@@ -68,31 +75,32 @@ const bdy = document.getElementById('compose-body').value
 }
 
 const getInbox = () => {
-  console.log('show inbox...')
+  //console.log('show inbox...')
   fetch('/emails/inbox')
   .then(response => response.json())
   .then(emails => {
       // Print emails
-      console.log(emails);
+      console.log('emails log', emails);
 
       // ... do something else with emails ...
-      const inboxDev = document.createElement('div')
-      inboxDev.id = "inbox-div"
+      // ####################################################
+      const inboxDev = cElemnt('div', 'inbox-div')
       
-      const resUl = document.createElement('ul')
+      
+      const resUl = cElemnt('ul', 'res-ul')
+      
       const emailsLi = emails.forEach(e => {
-        const li = document.createElement('li')
-        const sn = document.createElement('div')
-        const dv = document.createElement('div')
-        li.className = 'mail-li'
-        sn.className = 'mail-sn'
-        dv.className = 'mail-body'
+        const li = cElemnt('li', `msg-${e.id}`, 'mail-li', e.subject)
+        const sn = cElemnt('div', `sn-${e.id}`, 'mail-sn', e.sender)
+        const dv = cElemnt('div', `dv-${e.id}`, 'mail-body', e.body)
+
+
         li.dataset.eid = e.id
-        li.innerHTML = e.subject
-        sn.innerHTML = e.sender
-        dv.innerHTML = e.body
+
+        li.append(lbl('Archive', 'lbl'))
         li.append(sn)
         li.append(dv)
+
         resUl.append(li)
       });
       // resUl.append(emailsLi)
@@ -100,26 +108,113 @@ const getInbox = () => {
       document.getElementById("emails-view").append(inboxDev)
       document.querySelectorAll('.mail-li').forEach(li=>{
         li.addEventListener('click', ()=>{
-          getEmail(li.dataset.eid)
-          // console.log(li)
+          console.log("loading...")
+          // console.log("loading...")
+
+          //const inboxDiv = document.querySelector('#inbox-div')
+          const msgDiv = document.querySelector('#current-msg')
+          inboxDev.style.display = 'none'
+          msgDiv.style.display = 'block'          
+          loadEmail(li.dataset.eid)
+          const bdyDiv = document.createElement('div')
+          // bdyDiv.innerHTML = emailTemplate()
+
         })
       })
   });
 }
-const getEmail = (id) => {
 
+const updateEmail = (id, archive) => {
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        archived: archive
+    })
+  })
+  
+}
+
+// const getEmail = (id) => {
+
+//   fetch(`/emails/${id}`)
+//   .then(response => response.json())
+//   .then(email => {
+//       // Print email
+//       console.log(email);
+
+//       // ... do something else with email ...
+//   });
+// }
+
+
+
+const lbl = (label, cls='') =>{
+  const ret = document.createElement('label')
+  ret.innerHTML = label
+  ret.className=cls
+  return ret
+}
+
+/**
+ * Each email should then be rendered in its own box (e.g. as a <div> with a border) 
+ * that displays who the email is from, what the subject line is, and the timestamp of the email.
+ */
+
+const loadEmail = id => {
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
       // Print email
       console.log(email);
-
+  
       // ... do something else with email ...
+      emailTemplate(email.sender, email.subject, email.body)
   });
-
 }
-// const fillInbox = (arr, div) =>{
 
-//   const cont = arr.map
+emailTemplate = (from, subject, body) => {
 
-// }
+  const ret = `<div>
+                  <li>From: ${from}
+                  <li>Subject:${subject}
+                  <div>${body}</div>
+              </div>`
+
+  const el = document.createElement('div')
+  el.className= 'msg';
+  const liFrom = document.createElement('li')
+  liFrom.innerHTML = `From: ${from}`
+
+  const liSubject = document.createElement('li')
+  liSubject.innerHTML = `subject: ${subject}`
+ 
+  const dvBody = document.createElement('div')
+  dvBody.innerHTML = `${body}`
+
+  return ret
+}
+
+
+
+
+function cElemnt(el, id='', cls='', html=''){
+  const ret = document.createElement(el)
+  ret.id = id
+  console.log(`'class-${cls}-eeeee`)
+  // if(cls !== null || cls !== '') {
+    
+  if(cls.length!=0){
+    ret.className=cls
+  }
+  if(html.length!=0){
+    ret.innerHTML = html
+
+  }
+  console.log("creating ", ret)
+  return ret
+}
+
+const inbDiv = (emails)=>{
+
+  
+}

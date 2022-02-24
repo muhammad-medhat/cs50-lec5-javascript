@@ -4,6 +4,10 @@ textarea {
 h4{
     background-color: #ccc;
 }
+.lbl{
+    cursor: pointer;
+    border: solid red;
+}
 #inbox-div{
     border:solid 1px
 }
@@ -20,4 +24,8 @@ h4{
 
 .mail-body{
     border: solid   ;
+}
+
+#current-msg{
+    /* display: none; */
 }

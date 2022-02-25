@@ -41,7 +41,7 @@ function load_mailbox(mailbox) {
   document.querySelector('#compose-view').style.display = 'none';
 
   // Show the mailbox name
-  document.querySelector('#emails-view').innerHTML = `<h3> ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  document.querySelector('#lblEmails').innerHTML = `<h3> ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
   console.log(`mailbox is: ${mailbox}`)
   switch(mailbox){
     case 'archive': 
@@ -97,7 +97,8 @@ const getInbox = () => {
 
         li.dataset.eid = e.id
 
-        li.append(lbl('Archive', 'lbl'))
+        li.append(lbl('Show Email', 'lbl btn primary'))
+        li.append(lbl('Archive', 'lbl btn danger'))
         li.append(sn)
         li.append(dv)
 
@@ -106,16 +107,27 @@ const getInbox = () => {
       // resUl.append(emailsLi)
       inboxDev.append(resUl)
       document.getElementById("emails-view").append(inboxDev)
+      
       document.querySelectorAll('.mail-li').forEach(li=>{
         li.addEventListener('click', ()=>{
           console.log("loading...")
-          // console.log("loading...")
+          // console.log(li)
+
+
+          const single = cElemnt('div', `msg-${li.dataset.eid}`)
+          // console.log('single', single)
+
+
 
           //const inboxDiv = document.querySelector('#inbox-div')
-          const msgDiv = document.querySelector('#current-msg')
-          inboxDev.style.display = 'none'
-          msgDiv.style.display = 'block'          
-          loadEmail(li.dataset.eid)
+
+                const msgDiv = document.querySelector('#current-msg')
+          //inboxDev.style.display = 'none'
+          //msgDiv.style.display = 'block'
+          console.log('APPENDING...')    
+          const msg = loadEmail(li.dataset.eid)  
+          console.log('MSG', msg)
+          msgDiv.append(msg)
           const bdyDiv = document.createElement('div')
           // bdyDiv.innerHTML = emailTemplate()
 
@@ -165,33 +177,43 @@ const loadEmail = id => {
   .then(response => response.json())
   .then(email => {
       // Print email
-      console.log(email);
+      //console.log(email);
   
       // ... do something else with email ...
-      emailTemplate(email.sender, email.subject, email.body)
+      const msg = emailTemplate(email.sender, email.subject, email.body)
+      const msgDiv = document.querySelector('#current-msg')
+      msgDiv.innerHTML = msg.outerHTML
+
+
+      console.log('....' )
+      console.log('msgf is' , msg)
   });
 }
 
 emailTemplate = (from, subject, body) => {
 
-  const ret = `<div>
-                  <li>From: ${from}
-                  <li>Subject:${subject}
-                  <div>${body}</div>
-              </div>`
+  // const ret = `<div>
+  //                 <li>From: ${from}
+  //                 <li>Subject:${subject}
+  //                 <div>${body}</div>
+  //             </div>`
 
   const el = document.createElement('div')
   el.className= 'msg';
-  const liFrom = document.createElement('li')
+
+  const liFrom = document.createElement('div')
   liFrom.innerHTML = `From: ${from}`
 
-  const liSubject = document.createElement('li')
+  const liSubject = document.createElement('div')
   liSubject.innerHTML = `subject: ${subject}`
  
   const dvBody = document.createElement('div')
   dvBody.innerHTML = `${body}`
 
-  return ret
+  el.append(liFrom, liSubject, dvBody)
+  console.log('emailTemplate()', el)
+
+  return el
 }
 
 
@@ -200,7 +222,7 @@ emailTemplate = (from, subject, body) => {
 function cElemnt(el, id='', cls='', html=''){
   const ret = document.createElement(el)
   ret.id = id
-  console.log(`'class-${cls}-eeeee`)
+  // console.log(`'class-${cls}-eeeee`)
   // if(cls !== null || cls !== '') {
     
   if(cls.length!=0){
@@ -210,7 +232,7 @@ function cElemnt(el, id='', cls='', html=''){
     ret.innerHTML = html
 
   }
-  console.log("creating ", ret)
+  // console.log("creating ", ret)
   return ret
 }
 

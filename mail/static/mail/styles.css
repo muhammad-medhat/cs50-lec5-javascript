@@ -5,8 +5,9 @@ h4{
     background-color: #ccc;
 }
 .lbl{
-    cursor: pointer;
-    border: solid red;
+    text-decoration: underline;
+    /* cursor: pointer;
+    border: solid red; */
 }
 #inbox-div{
     border:solid 1px
@@ -27,5 +28,7 @@ h4{
 }
 
 #current-msg{
+    border: solid ;
+    min-height: 50%;
     /* display: none; */
 }

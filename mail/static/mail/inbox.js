@@ -43,15 +43,16 @@ function load_mailbox(mailbox) {
   // Show the mailbox name
   document.querySelector('#lblEmails').innerHTML = `<h3> ${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
   console.log(`mailbox is: ${mailbox}`)
-  switch(mailbox){
-    case 'archive': 
-      console.log('get archived mail')
-      break;
-    case 'sent':
-        console.log('loading sent tab')
-      break;
-    default: getInbox()
-  }
+  getMailBox(mailbox)
+  // switch(mailbox){
+  //   case 'archive': 
+  //     console.log('get archived mail')
+  //     break;
+  //   case 'sent':
+  //       console.log('loading sent tab')
+  //     break;
+  //   default: getInbox()
+  //}
 }
 
 const sendEmail = () => {
@@ -62,6 +63,7 @@ const bdy = document.getElementById('compose-body').value
     method: 'POST',
     body: JSON.stringify({
         recipients: res,
+        eTime: currDt(), 
         subject: sub, //'Meeting time',
         body: bdy //'How about we meet tomorrow at 3pm?'
     })
@@ -74,91 +76,97 @@ const bdy = document.getElementById('compose-body').value
   
 }
 
-const getInbox = () => {
-  //console.log('show inbox...')
-  fetch('/emails/inbox')
+const getMailBox = type => {
+  console.log(`Loaading the mailbox ${type}...`)
+
+  fetch(`/emails/${type}`)
   .then(response => response.json())
   .then(emails => {
-      // Print emails
-      console.log('emails log', emails);
-
-      // ... do something else with emails ...
-      // ####################################################
-      const inboxDev = cElemnt('div', 'inbox-div')
-      
-      
-      const resUl = cElemnt('ul', 'res-ul')
-      
-      const emailsLi = emails.forEach(e => {
-        const li = cElemnt('li', `msg-${e.id}`, 'mail-li', e.subject)
-        const sn = cElemnt('div', `sn-${e.id}`, 'mail-sn', e.sender)
-        const dv = cElemnt('div', `dv-${e.id}`, 'mail-body', e.body)
-
-
-        li.dataset.eid = e.id
-
-        li.append(lbl('Show Email', 'lbl btn primary'))
-        li.append(lbl('Archive', 'lbl btn danger'))
-        li.append(sn)
-        li.append(dv)
-
-        resUl.append(li)
-      });
-      // resUl.append(emailsLi)
-      inboxDev.append(resUl)
-      document.getElementById("emails-view").append(inboxDev)
-      
-      document.querySelectorAll('.mail-li').forEach(li=>{
-        li.addEventListener('click', ()=>{
-          console.log("loading...")
-          // console.log(li)
-
-
-          const single = cElemnt('div', `msg-${li.dataset.eid}`)
-          // console.log('single', single)
-
-
-
-          //const inboxDiv = document.querySelector('#inbox-div')
-
-                const msgDiv = document.querySelector('#current-msg')
-          //inboxDev.style.display = 'none'
-          //msgDiv.style.display = 'block'
-          console.log('APPENDING...')    
-          const msg = loadEmail(li.dataset.eid)  
-          console.log('MSG', msg)
-          msgDiv.append(msg)
-          const bdyDiv = document.createElement('div')
-          // bdyDiv.innerHTML = emailTemplate()
-
-        })
-      })
-  });
+    console.log('API return', emails)
+    bindEmails(emails)
+  })
 }
 
-const updateEmail = (id, archive) => {
+const getInbox = () => {
+  getMailBox('inbox')
+}
+
+const eventListener = () =>{
+  //click email
+    document.querySelectorAll('.mail-li').forEach(li=>{
+      li.addEventListener('click', ()=>{
+        console.log("loading...")
+        // console.log('li is clicked', li)
+
+        const single = cElemnt('div', `msg-${li.dataset.eid}`)
+        // console.log('single', single)
+
+        const msgDiv = document.querySelector('#current-msg')
+
+        // console.log('APPENDING...')    
+        const msg = loadEmail(li.dataset.eid)  
+        // console.log('MSG', msg)
+        msgDiv.append(msg)
+        readEmail(li.dataset.eid)
+
+    })
+  })
+}
+
+const bindEmails = (emailsList) =>{
+
+  console.log('bindEmails...', emailsList)
+  const inboxDev = document.getElementById( 'inbox-div') 
+  inboxDev.innerHTML =''                      
+  const resUl = cElemnt('ul', 'res-ul')
+
+  const emailsLi = emailsList.forEach(e => {
+    const li = cElemnt('li', `msg-${e.id}`, 'mail-li', e.subject)
+    const sn = cElemnt('div', `sn-${e.id}`, 'mail-sn', e.sender)
+    const dv = cElemnt('div', `dv-${e.id}`, 'mail-body', e.body)
+
+
+    li.dataset.eid = e.id
+
+    li.append(lbl('Show Email', 'lbl btn primary'))
+    li.append(sn)
+    li.append(dv)
+
+    if(e.read){
+      li.className='read'
+    }
+
+    resUl.append(li)
+  });
+  inboxDev.append(resUl)
+  eventListener()
+
+
+
+}
+const archiveEmail = (id, archive) => {
   fetch(`/emails/${id}`, {
     method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
         archived: archive
     })
   })
-  
 }
+const readEmail = (id) => {
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        read: true
+    })
+  })  
+  // .then( response => response.json() )
+  // .then(e =>{
+  //   console.log('read email', e)
+  // })
 
-// const getEmail = (id) => {
-
-//   fetch(`/emails/${id}`)
-//   .then(response => response.json())
-//   .then(email => {
-//       // Print email
-//       console.log(email);
-
-//       // ... do something else with email ...
-//   });
-// }
-
-
+}
 
 const lbl = (label, cls='') =>{
   const ret = document.createElement('label')
@@ -180,37 +188,22 @@ const loadEmail = id => {
       //console.log(email);
   
       // ... do something else with email ...
-      const msg = emailTemplate(email.sender, email.subject, email.body)
+      const msg = emailTemplate(email.sender,email.timestamp, email.subject, email.body)
       const msgDiv = document.querySelector('#current-msg')
       msgDiv.innerHTML = msg.outerHTML
 
-
-      console.log('....' )
-      console.log('msgf is' , msg)
   });
 }
 
-emailTemplate = (from, subject, body) => {
+emailTemplate = (from, timestamp, subject, body) => {
 
-  // const ret = `<div>
-  //                 <li>From: ${from}
-  //                 <li>Subject:${subject}
-  //                 <div>${body}</div>
-  //             </div>`
+  const el = cElemnt('div', '', 'msg' )
+  const dvFrom = cElemnt('div', '', '', lbl(`From: ${from}`).outerHTML )
+  const dvTimestamp = cElemnt('div', '', '', lbl(`Timestamp: ${timestamp}`).outerHTML )
+  const dvSubject = cElemnt('div', '', '', lbl(`subject: ${subject}`, 'font-weight-bold').outerHTML )
+  const dvBody = cElemnt('div', '', 'border mx-auto', `${body}`)
 
-  const el = document.createElement('div')
-  el.className= 'msg';
-
-  const liFrom = document.createElement('div')
-  liFrom.innerHTML = `From: ${from}`
-
-  const liSubject = document.createElement('div')
-  liSubject.innerHTML = `subject: ${subject}`
- 
-  const dvBody = document.createElement('div')
-  dvBody.innerHTML = `${body}`
-
-  el.append(liFrom, liSubject, dvBody)
+  el.append(dvFrom, dvTimestamp, dvSubject, dvBody)
   console.log('emailTemplate()', el)
 
   return el
@@ -221,10 +214,12 @@ emailTemplate = (from, subject, body) => {
 
 function cElemnt(el, id='', cls='', html=''){
   const ret = document.createElement(el)
-  ret.id = id
   // console.log(`'class-${cls}-eeeee`)
   // if(cls !== null || cls !== '') {
     
+  if(id.length!=0){  
+    ret.id = id
+  }
   if(cls.length!=0){
     ret.className=cls
   }
@@ -239,4 +234,15 @@ function cElemnt(el, id='', cls='', html=''){
 const inbDiv = (emails)=>{
 
   
+}
+const currDt = () =>{
+  let currentDate = new Date();
+  let cDay = currentDate.getDate()
+  let cMonth = currentDate.getMonth() + 1
+  let cYear = currentDate.getFullYear()
+  let cHr = currentDate.getHours() 
+  let cMn = currentDate.getMinutes() 
+  let cSc =  currentDate.getSeconds();
+
+  return `${cDay}/${cMonth}/${cYear} ${cHr}:${cMn}:${cSc}`
 }

@@ -12,6 +12,9 @@ h4{
 #inbox-div{
     border:solid 1px
 }
+#inbox-div li{
+    background-color: #ccc;
+}
 .mail-sn::before{
     content:'Sender';
     padding: 10px;
@@ -31,4 +34,8 @@ h4{
     border: solid ;
     min-height: 50%;
     /* display: none; */
+}
+.read{
+    border: solid red 1px;
+    background-color: #fff !important;
 }

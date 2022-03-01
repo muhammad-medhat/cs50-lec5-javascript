@@ -1,11 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+  // const parser = new DOMParser();
+
   // Use buttons to toggle between views
   document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
   
+  const archiveUnarchText = "Archive/Unarchive"
   /**
    * Compose mail
    */
@@ -22,17 +25,18 @@ document.addEventListener('DOMContentLoaded', function() {
   load_mailbox('inbox');
 });
 
-function compose_email() {
+function compose_email(rec = '') {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
-  document.querySelector('#compose-recipients').value = '';
+  document.querySelector('#compose-recipients').value = rec;
   document.querySelector('#compose-subject').value = '';
   document.querySelector('#compose-body').value = '';
 }
+    const replyEmail = (id, rec)=>{ compose_email(rec)}
 
 function load_mailbox(mailbox) {
   
@@ -65,7 +69,7 @@ const bdy = document.getElementById('compose-body').value
         recipients: res,
         eTime: currDt(), 
         subject: sub, //'Meeting time',
-        body: bdy //'How about we meet tomorrow at 3pm?'
+        body: bdy //'How about  ""we meet tomorrow at 3pm?'
     })
   })
   .then(response => response.json())
@@ -91,6 +95,25 @@ const getInbox = () => {
   getMailBox('inbox')
 }
 
+const evt = li =>{
+  li.addEventListener('click', ()=>{
+    console.log("loading...")
+    // console.log('li is clicked', li)
+
+    const single = cElemnt('div', `msg-${li.dataset.eid}`)
+    // console.log('single', single)
+
+    const msgDiv = document.querySelector('#current-msg')
+
+    // console.log('APPENDING...')    
+    const msg = loadEmail(li.dataset.eid)  
+    // console.log('MSG', msg)
+    msgDiv.append(msg)
+    // bindEmails()
+    readEmail(li.dataset.eid)
+
+  })
+}
 const eventListener = () =>{
   //click email
     document.querySelectorAll('.mail-li').forEach(li=>{
@@ -113,7 +136,34 @@ const eventListener = () =>{
   })
 }
 
+const showEmail = ( id ) =>{
+  console.log(`"show (${id})...`)
+  // console.log('li is clicked', li)
+
+  const single = cElemnt('div', `msg-${id}`)
+  // console.log('single', single)
+
+  const msgDiv = document.querySelector('#current-msg')
+
+  // console.log('APPENDING...')    
+  const msg = loadEmail(id)  
+  // console.log('MSG', msg)
+  msgDiv.append(msg)
+  // bindEmails()
+  readEmail(id)
+}
+
 const bindEmails = (emailsList) =>{
+
+  // const parser = new DOMParser();
+
+
+  // const emailListItem = `
+  //                         <li id='msg-${e.id}' class='mail-li'>[${e.id}]. ${e.subject}
+                          
+                          
+  //                         </li>
+  //                 `
 
   console.log('bindEmails...', emailsList)
   const inboxDev = document.getElementById( 'inbox-div') 
@@ -121,30 +171,44 @@ const bindEmails = (emailsList) =>{
   const resUl = cElemnt('ul', 'res-ul')
 
   const emailsLi = emailsList.forEach(e => {
-    const li = cElemnt('li', `msg-${e.id}`, 'mail-li', e.subject)
-    const sn = cElemnt('div', `sn-${e.id}`, 'mail-sn', e.sender)
-    const dv = cElemnt('div', `dv-${e.id}`, 'mail-body', e.body)
+
+    
+        //   const emailListItem = `
+        //   <li id='msg-${e.id}' class='mail-li' data-eid='${e.id}'>lllll
+        //                 [${e.id}]. ${e.subject}  
+        //   </li>
+        // `
+      // const lis = parser.parseFromString(emailListItem, 'text/html')
+      // console.log('==========', lis)
 
 
+
+    const li = cElemnt('li', `msg-${e.id}`, 'mail-li', `[${e.id}]. ${e.subject}`)
+    // const sn = cElemnt('div', `sn-${e.id}`, 'mail-sn', e.sender)
+    // const dv = cElemnt('div', `dv-${e.id}`, 'mail-body', e.body)
     li.dataset.eid = e.id
 
-    li.append(lbl('Show Email', 'lbl btn primary'))
-    li.append(sn)
-    li.append(dv)
+    // const unread_link  = cElemnt('a', `sh-${e.id}`, 'btn btn-primary', 'Mark as unread', `showEmail(${e.id})`)
+
+    // li.append(unread_link)
+    // li.append(lbl('Show Email', 'lbl btn primary'))
+    // li.append(sn)
+    // li.append(dv)
 
     if(e.read){
-      li.className='read'
+      li.classList.add('read')
     }
-
     resUl.append(li)
+    evt(li)
   });
   inboxDev.append(resUl)
-  eventListener()
-
-
-
+  // eventListener()
 }
+
+
 const archiveEmail = (id, archive) => {
+  // archive or unarchive mail
+  // const archive = 
   fetch(`/emails/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -152,6 +216,15 @@ const archiveEmail = (id, archive) => {
         archived: archive
     })
   })
+}
+const unreadEmail = (id) => {
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        read: false
+    })
+  })  
 }
 const readEmail = (id) => {
   fetch(`/emails/${id}`, {
@@ -188,46 +261,76 @@ const loadEmail = id => {
       //console.log(email);
   
       // ... do something else with email ...
-      const msg = emailTemplate(email.sender,email.timestamp, email.subject, email.body)
+      const msg = emailTemplate(email.sender,email.timestamp, email.subject, email.body, email.id, !email.archived, email.sender)
       const msgDiv = document.querySelector('#current-msg')
-      msgDiv.innerHTML = msg.outerHTML
+      msgDiv.innerHTML = msg//.outerHTML
 
   });
 }
 
-emailTemplate = (from, timestamp, subject, body) => {
+emailTemplate = (from, timestamp, subject, body, id, arch, rec='') => {
+  console.log('rrrrr', rec)
+  const archiveUnarchText = "Archive/Unarchive"
+  console.log('archive', arch)
+  const etime = timestamp
+                  // const el = cElemnt('div', '', 'msg' )
+                  // const dvFrom = cElemnt('div', '', '', lbl(`From: ${from}`).outerHTML )
+                  // const dvTimestamp = cElemnt('div', '', '', lbl(`Timestamp: ${timestamp}`).outerHTML )
+                  // const dvSubject = cElemnt('div', '', '', lbl(`subject: ${subject}`, 'font-weight-bold').outerHTML )
+                  // const dvBody = cElemnt('div', '', 'border mx-auto', `${body}`)
+                  // const btnArchive = cElemnt('span', `archive-${id}`, 'btn btn-primary', archiveUnarchText)
+                  // const eidLabel = cElemnt('span', '', 'font-weight-bold', `ID: ${id}`)
 
-  const el = cElemnt('div', '', 'msg' )
-  const dvFrom = cElemnt('div', '', '', lbl(`From: ${from}`).outerHTML )
-  const dvTimestamp = cElemnt('div', '', '', lbl(`Timestamp: ${timestamp}`).outerHTML )
-  const dvSubject = cElemnt('div', '', '', lbl(`subject: ${subject}`, 'font-weight-bold').outerHTML )
-  const dvBody = cElemnt('div', '', 'border mx-auto', `${body}`)
+                  // eidLabel.dataset.eid = id
+                  // eidLabel.addEventListener('click', ()=>{
+                  //   const eid = id
+                  //   archiveEmail(eid, true)
+                  // })
 
-  el.append(dvFrom, dvTimestamp, dvSubject, dvBody)
-  console.log('emailTemplate()', el)
-
-  return el
+                  // el.append(eidLabel, btnArchive, dvFrom, dvTimestamp, dvSubject, dvBody)
+  ///////////////////////////////////////////////////
+const html = `
+      <div class="container">
+        <div class="card" >              
+          <div >From: ${from}</div>
+          <div >Timestamp: ${etime}</div>
+            <div class="card-body">
+              <h5 class="card-title">${subject}</h5>
+              <h6 class="card-subtitle mb-2 text-muted">Email ID: (${id})</h6>
+              <p class="card-text">${body}</p>
+              <a href="#" id='reply-${id}' onClick='replyEmail(${id}, "${rec}")' class="card-link">Reply</a>
+              <a href="#" id='reply-${id}' onClick='unreadEmail(${id})' class="card-link">Mark as unread</a>
+              <a href="#" id='archive-${id}' onClick='archiveEmail(${id}, ${arch})' class="card-link">${archiveUnarchText}</a>
+            </div>
+          </div>
+      </div>`
+  return html
 }
 
 
 
 
-function cElemnt(el, id='', cls='', html=''){
-  const ret = document.createElement(el)
-  // console.log(`'class-${cls}-eeeee`)
-  // if(cls !== null || cls !== '') {
+function cElemnt(el, id='', cls='', html='', onclick=''){
+  const ret = document.createElement(el, {
+    id: id, 
+    className: cls, 
+    onclick: onclick
+  }, html)
+  console.log(`'class-${cls}-eeeee`)
     
-  if(id.length!=0){  
-    ret.id = id
-  }
-  if(cls.length!=0){
-    ret.className=cls
-  }
-  if(html.length!=0){
-    ret.innerHTML = html
-
-  }
-  // console.log("creating ", ret)
+      if(id.length!=0){  
+        ret.id = id
+      }
+      if(cls.length!=0){
+        ret.className=cls
+      }
+      if(html.length!=0){
+        ret.innerHTML = html
+      }
+      if(onclick.length!=0){
+        ret.onclick = onclick
+      }
+  console.log("creating ", ret)
   return ret
 }
 

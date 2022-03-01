@@ -1,4 +1,5 @@
 import json
+import re
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
@@ -6,6 +7,8 @@ from django.http import JsonResponse
 from django.shortcuts import HttpResponse, HttpResponseRedirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+
+import pprint
 
 from .models import User, Email
 
@@ -115,6 +118,9 @@ def email(request, email_id):
     # Update whether email is read or should be archived
     elif request.method == "PUT":
         data = json.loads(request.body)
+        # print(vars(request))
+        # print(50*'=')
+        print('data arr  is ', data)
         if data.get("read") is not None:
             email.read = data["read"]
         if data.get("archived") is not None:
